@@ -1,0 +1,146 @@
+﻿.contenedor {
+    text-align: center;
+    margin-top: 100px;
+    background: linear-gradient(to bottom, #f8f9fa, #dfe6e9);
+    padding: 50px;
+    border-radius: 15px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+
+.mensaje {
+    font-size: 40px;
+    font-weight: bold;
+    color: #f39c12;
+    text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.3);
+    margin-bottom: 20px;
+    animation: mensajeAnimacion 2s ease-out;
+}
+
+@keyframes mensajeAnimacion {
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+
+    50% {
+        transform: scale(1.1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.balloon {
+    position: absolute;
+    animation: flotar 5s ease-in-out infinite;
+    z-index: 10;
+}
+
+@keyframes flotar {
+    0% {
+        transform: translateY(0) rotate(0deg);
+    }
+
+    50% {
+        transform: translateY(-70px) rotate(20deg);
+    }
+
+    100% {
+        transform: translateY(0) rotate(0deg);
+    }
+}
+
+.balloon img {
+    width: 90px;
+    height: auto;
+    animation: balloonAnimacion 5s ease-in-out infinite;
+}
+
+@keyframes balloonAnimacion {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+.sparkle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    animation: sparkle 1s infinite;
+    z-index: 5;
+}
+
+@keyframes sparkle {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+
+    50% {
+        transform: scale(1.2);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(0);
+        opacity: 0;
+    }
+}
+
+.sparkle img {
+    width: 40px;
+    height: auto;
+    opacity: 0.8;
+}
+
+.btn-animated {
+    animation: pulsar 1.5s infinite ease-in-out;
+}
+
+@keyframes pulsar {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+.btn {
+    padding: 12px 25px;
+    font-size: 16px;
+    background-color: #27ae60;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+    .btn:hover {
+        background-color: #2ecc71;
+        transform: scale(1.05);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn:active {
+        transform: scale(0.98);
+    }
