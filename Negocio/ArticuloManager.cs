@@ -113,5 +113,31 @@ namespace Negocio
                 return valorEnCasoDeError;
             }
         }
+
+        public void insertarArticulo(Articulo articuloNuevo)
+        {
+            AccesoADatos conexion = new AccesoADatos();
+
+            try
+            {
+                string query = "Insert into Articulos (Codigo, Nombre, Descripcion, IdMarca, IdCategoria, Precio) values (@Codigo, @Nombre, @Descricion, @IdMarca, @IdCategoria, @Precio)";
+                conexion.setearConsulta(query);
+                conexion.agregarParametros("@Codigo", articuloNuevo.Codigo);
+                conexion.agregarParametros("@Nombre", articuloNuevo.Nombre);
+                conexion.agregarParametros("@Descricion", articuloNuevo.Descripcion);
+                conexion.agregarParametros("@IdMarca", articuloNuevo.Marca.Id);
+                conexion.agregarParametros("@IdCategoria", articuloNuevo.Categoria.Id);
+                conexion.agregarParametros("@Precio", articuloNuevo.Precio);
+                conexion.ejecutarNonQuery();
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+            finally
+            {
+                conexion.cerrarConexion();
+            }
+        }
     }
 }

@@ -40,5 +40,41 @@ namespace Negocio
 
             return listaImagenes;
         }
+
+        public void agregarImagenes(int id, List<Imagen> listaImagenes)
+        {
+            AccesoADatos conexion = new AccesoADatos();
+
+            try
+            {
+                foreach (var item in listaImagenes)
+                {
+                    //Todo el código comentado era porque no funcionaba inicialmente, pero ahora funciona por alguna razón...
+
+                    //conexion.setearConsulta("Begin Transaction");
+                    //conexion.ejecutarNonQuery();
+                    //conexion.comando.Parameters.Clear();
+
+                    conexion.setearConsulta("Insert into Imagenes (IdArticulo, ImagenURL) VALUES (@IdArticulo, @ImagenURL)");
+                    conexion.agregarParametros("@IdArticulo", id);
+                    conexion.agregarParametros("@ImagenURL", item.ImagenUrl);
+                    conexion.ejecutarNonQuery();
+                    conexion.comando.Parameters.Clear();
+                }
+                //conexion.setearConsulta("Commit Transaction");
+                //conexion.ejecutarNonQuery();
+            }
+            catch (Exception)
+            {
+                //conexion.comando.Parameters.Clear();
+                //conexion.setearConsulta("Rollback");
+                //conexion.ejecutarNonQuery();
+                throw;
+            }
+            finally
+            {  
+                conexion.cerrarConexion();
+            }
+        }
     }
 }
