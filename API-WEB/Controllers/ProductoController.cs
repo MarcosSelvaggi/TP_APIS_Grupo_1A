@@ -14,9 +14,31 @@ namespace API_WEB.Controllers
     public class ProductoController : ApiController
     {
         // GET: api/Producto
-        public IEnumerable<string> Get()
+        public IEnumerable<Articulo> Get()
         {
-            return new string[] { "value1", "value2" };
+            ArticuloManager articuloManager = new ArticuloManager();
+            ImagenManager imagenManager = new ImagenManager();
+
+            var listaArticulos = articuloManager.listarArticulos();
+            var listaImagenes = imagenManager.listarImagenes();
+
+            foreach (var art in listaArticulos)
+            {
+                foreach (var img in listaImagenes)
+                {
+                    if(art.Id == img.IdArticulo)
+                    {
+                        art.Imagenes.Add(new Imagen {
+                            Id = img.Id,
+                            IdArticulo = img.IdArticulo,
+                            ImagenUrl = img.ImagenUrl
+                        });
+                    }
+                }
+                
+            }
+
+            return listaArticulos;
         }
 
         // GET: api/Producto/5
@@ -69,7 +91,6 @@ namespace API_WEB.Controllers
                 }
             }
 
-            
         }
 
         // DELETE: api/Producto/5

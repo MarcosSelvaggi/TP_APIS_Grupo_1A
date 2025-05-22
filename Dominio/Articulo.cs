@@ -17,10 +17,12 @@ namespace Dominio
 
         public Marca Marca { get; set; }
         public Categoria Categoria { get; set; }
+        public List<Imagen> Imagenes { get; set; }
         public Articulo()
         {
             Marca = new Marca();
             Categoria = new Categoria();
+            Imagenes = new List<Imagen>();
         }
     }
 }
