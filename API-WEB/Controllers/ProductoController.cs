@@ -26,16 +26,17 @@ namespace API_WEB.Controllers
             {
                 foreach (var img in listaImagenes)
                 {
-                    if(art.Id == img.IdArticulo)
+                    if (art.Id == img.IdArticulo)
                     {
-                        art.Imagenes.Add(new Imagen {
+                        art.Imagenes.Add(new Imagen
+                        {
                             Id = img.Id,
                             IdArticulo = img.IdArticulo,
                             ImagenUrl = img.ImagenUrl
                         });
                     }
                 }
-                
+
             }
 
             return listaArticulos;
@@ -50,67 +51,98 @@ namespace API_WEB.Controllers
         // POST: api/Producto
         public void Post([FromBody] ArticuloDto articuloNuevo)
         {
-            ArticuloManager articuloManager = new ArticuloManager();
-            Articulo articulo = new Articulo();
-            articulo.Nombre = articuloNuevo.Nombre;
-            articulo.Descripcion = articuloNuevo.Descripcion;
-            articulo.Codigo = articuloNuevo.Codigo;
-            articulo.Precio = articuloNuevo.Precio;
-            articulo.Categoria.Id = articuloNuevo.IdCategoria;
-            articulo.Marca.Id = articuloNuevo.IdMarca;
-
-            articuloManager.insertarArticulo(articulo);
+            if (ArticuloCompleto(articuloNuevo))
+            {
+                ArticuloManager articuloManager = new ArticuloManager();
+                Articulo articulo = new Articulo
+                {
+                    Nombre = articuloNuevo.Nombre,
+                    Descripcion = articuloNuevo.Descripcion,
+                    Codigo = articuloNuevo.Codigo,
+                    Precio = articuloNuevo.Precio,
+                    Categoria = { Id = articuloNuevo.IdCategoria },
+                    Marca = { Id = articuloNuevo.IdMarca },
+                };                
+                articuloManager.insertarArticulo(articulo);
+            }
+            else
+            {
+                return;
+            }
         }
 
         // PUT: api/Producto/5
         public void Put(int id, [FromBody] ArticuloDto articuloModificado)
         {
             ArticuloManager articuloManager = new ArticuloManager();
-            Articulo articulo = new Articulo
+            List<Articulo> listaArticulos = articuloManager.listarArticulos();
+            List<Imagen> listaImagen = new List<Imagen>();
+            ImagenManager imagenManager = new ImagenManager();
+
+            if (ArticuloCompleto(articuloModificado) && articuloModificado.Imagenes.Count != 0)
             {
-                Nombre = articuloModificado.Nombre,
-                Descripcion = articuloModificado.Descripcion,
-                Codigo = articuloModificado.Codigo,
-                Precio = articuloModificado.Precio,
-                Categoria = { Id = articuloModificado.IdCategoria },
-                Marca = { Id = articuloModificado.IdMarca },
-                Id = id
-            };
-
-            articuloManager.modificarArticulo(articulo);
-            
-
-            /*ArticuloManager ArticuloManager = new ArticuloManager();
-            List<Articulo> listaArticulos = ArticuloManager.listarArticulos();
-
-            foreach (var item in listaArticulos)
-            {
-                if (item.Id == id)
+                Articulo articulo = new Articulo
                 {
-                    if(articuloNuevo.Imagenes.Count == 0)
+                    Nombre = articuloModificado.Nombre,
+                    Descripcion = articuloModificado.Descripcion,
+                    Codigo = articuloModificado.Codigo,
+                    Precio = articuloModificado.Precio,
+                    Categoria = { Id = articuloModificado.IdCategoria },
+                    Marca = { Id = articuloModificado.IdMarca },
+                    Id = id
+                };
+                articuloManager.modificarArticulo(articulo);
+
+                foreach (var item in listaArticulos)
+                {
+                    if (item.Id == id)
                     {
-                        return;
-                    }
-                    else
-                    {
-                        List<Imagen> listaImagen = new List<Imagen>();
-                        
-                        foreach (var imagenes in articuloNuevo.Imagenes)
+                        foreach (var imagenes in articuloModificado.Imagenes)
                         {
                             listaImagen.Add(imagenes);
                         }
-
-                        ImagenManager imagenManager = new ImagenManager();
                         imagenManager.agregarImagenes(id, listaImagen);
                     }
                 }
-            }*/
-
+            }
+            else if (!ArticuloCompleto(articuloModificado) && articuloModificado.Imagenes.Count != 0)
+            {
+                foreach (var item in listaArticulos)
+                {
+                    if (item.Id == id)
+                    {
+                        foreach (var imagenes in articuloModificado.Imagenes)
+                        {
+                            listaImagen.Add(imagenes);
+                        }
+                        imagenManager.agregarImagenes(id, listaImagen);
+                    }
+                }
+            }
+            else if (ArticuloCompleto(articuloModificado) && articuloModificado.Imagenes.Count == 0)
+            {
+                Articulo articulo = new Articulo
+                {
+                    Nombre = articuloModificado.Nombre,
+                    Descripcion = articuloModificado.Descripcion,
+                    Codigo = articuloModificado.Codigo,
+                    Precio = articuloModificado.Precio,
+                    Categoria = { Id = articuloModificado.IdCategoria },
+                    Marca = { Id = articuloModificado.IdMarca },
+                    Id = id
+                };
+                articuloManager.modificarArticulo(articulo);
+            }
         }
 
         // DELETE: api/Producto/5
         public void Delete(int id)
         {
+        }
+
+        private bool ArticuloCompleto(ArticuloDto articulo)
+        {
+            return true;
         }
     }
 }
