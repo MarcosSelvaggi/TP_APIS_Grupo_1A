@@ -63,9 +63,24 @@ namespace API_WEB.Controllers
         }
 
         // PUT: api/Producto/5
-        public void Put(int id, [FromBody] ArticuloDto articuloNuevo)
+        public void Put(int id, [FromBody] ArticuloDto articuloModificado)
         {
-            ArticuloManager ArticuloManager = new ArticuloManager();
+            ArticuloManager articuloManager = new ArticuloManager();
+            Articulo articulo = new Articulo
+            {
+                Nombre = articuloModificado.Nombre,
+                Descripcion = articuloModificado.Descripcion,
+                Codigo = articuloModificado.Codigo,
+                Precio = articuloModificado.Precio,
+                Categoria = { Id = articuloModificado.IdCategoria },
+                Marca = { Id = articuloModificado.IdMarca },
+                Id = id
+            };
+
+            articuloManager.modificarArticulo(articulo);
+            
+
+            /*ArticuloManager ArticuloManager = new ArticuloManager();
             List<Articulo> listaArticulos = ArticuloManager.listarArticulos();
 
             foreach (var item in listaArticulos)
@@ -89,7 +104,7 @@ namespace API_WEB.Controllers
                         imagenManager.agregarImagenes(id, listaImagen);
                     }
                 }
-            }
+            }*/
 
         }
 
