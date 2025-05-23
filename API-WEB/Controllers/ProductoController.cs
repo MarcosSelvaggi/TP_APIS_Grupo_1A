@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Http;
 using System.Web.Http;
 using System.Web.UI.WebControls.WebParts;
+using System.Xml.Linq;
 using API_WEB.Models;
 using Dominio;
 using Negocio;
@@ -15,32 +16,39 @@ namespace API_WEB.Controllers
     public class ProductoController : ApiController
     {
         // GET: api/Producto
-        public IEnumerable<Articulo> Get()
+        public HttpResponseMessage Get()
         {
-            ArticuloManager articuloManager = new ArticuloManager();
-            ImagenManager imagenManager = new ImagenManager();
-
-            var listaArticulos = articuloManager.listarArticulos();
-            var listaImagenes = imagenManager.listarImagenes();
-
-            foreach (var art in listaArticulos)
+            try
             {
-                foreach (var img in listaImagenes)
+                ArticuloManager articuloManager = new ArticuloManager();
+                ImagenManager imagenManager = new ImagenManager();
+
+                var listaArticulos = articuloManager.listarArticulos();
+                var listaImagenes = imagenManager.listarImagenes();
+
+                foreach (var art in listaArticulos)
                 {
-                    if (art.Id == img.IdArticulo)
+                    foreach (var img in listaImagenes)
                     {
-                        art.Imagenes.Add(new Imagen
+                        if (art.Id == img.IdArticulo)
                         {
-                            Id = img.Id,
-                            IdArticulo = img.IdArticulo,
-                            ImagenUrl = img.ImagenUrl
-                        });
+                            art.Imagenes.Add(new Imagen
+                            {
+                                Id = img.Id,
+                                IdArticulo = img.IdArticulo,
+                                ImagenUrl = img.ImagenUrl
+                            });
+                        }
                     }
                 }
 
+                return Request.CreateResponse(HttpStatusCode.OK, listaArticulos);
             }
-
-            return listaArticulos;
+            catch (Exception)
+            {
+                return Request.CreateResponse(HttpStatusCode.InternalServerError, "Ocurrió un error inesperado.");
+            }
+            
         }
 
         // GET: api/Producto/5
@@ -95,67 +103,80 @@ namespace API_WEB.Controllers
         }
 
         // PUT: api/Producto/5
-        public void Put(int id, [FromBody] ArticuloDto articuloModificado)
+        public HttpResponseMessage Put(int id, [FromBody] ArticuloDto articuloModificado)
         {
-            ArticuloManager articuloManager = new ArticuloManager();
-            List<Articulo> listaArticulos = articuloManager.listarArticulos();
-            List<Imagen> listaImagen = new List<Imagen>();
-            ImagenManager imagenManager = new ImagenManager();
+            try
+            {
+                ArticuloManager articuloManager = new ArticuloManager();
+                List<Articulo> listaArticulos = articuloManager.listarArticulos();
+                List<Imagen> listaImagen = new List<Imagen>();
+                ImagenManager imagenManager = new ImagenManager();
 
-            if (ArticuloCompleto(articuloModificado) && articuloModificado.Imagenes.Count != 0)
-            {
-                Articulo articulo = new Articulo
-                {
-                    Nombre = articuloModificado.Nombre,
-                    Descripcion = articuloModificado.Descripcion,
-                    Codigo = articuloModificado.Codigo,
-                    Precio = articuloModificado.Precio,
-                    Categoria = { Id = articuloModificado.IdCategoria },
-                    Marca = { Id = articuloModificado.IdMarca },
-                    Id = id
-                };
-                articuloManager.modificarArticulo(articulo);
+                if(!ProductoExiste(id))
+                    return Request.CreateResponse(HttpStatusCode.NotFound, "El articulo no existe.");
 
-                foreach (var item in listaArticulos)
-                {
-                    if (item.Id == id)
+                if (ArticuloCompleto(articuloModificado) && articuloModificado.Imagenes != null)
+                { 
+                    if (!MarcaExiste(articuloModificado.IdMarca))
+                        return Request.CreateResponse(HttpStatusCode.BadRequest, "La marca no existe.");
+                    if (!CategoriaExiste(articuloModificado.IdCategoria))
+                        return Request.CreateResponse(HttpStatusCode.BadRequest, "La categoría no existe.");
+                    if (!PrecioValido(articuloModificado.Precio))
+                        return Request.CreateResponse(HttpStatusCode.BadRequest, "El precio es un campo obligatorio y debe ser mayor a cero.");
+
+                    var articulo = ConstruirArticuloDesdeDto(articuloModificado, id);
+
+                    articuloManager.modificarArticulo(articulo);
+
+                    foreach (var item in listaArticulos)
                     {
-                        foreach (var imagenes in articuloModificado.Imagenes)
+                        if (item.Id == id)
                         {
-                            listaImagen.Add(imagenes);
+                            foreach (var imagenes in articuloModificado.Imagenes)
+                            {
+                                listaImagen.Add(new Imagen { ImagenUrl = imagenes.ImagenUrl });
+                            }
+                            imagenManager.agregarImagenes(id, listaImagen);
                         }
-                        imagenManager.agregarImagenes(id, listaImagen);
                     }
+                    return Request.CreateResponse(HttpStatusCode.OK, "Artículo modificado e Imágenes agregadas correctamente.");
                 }
-            }
-            else if (!ArticuloCompleto(articuloModificado) && articuloModificado.Imagenes.Count != 0)
-            {
-                foreach (var item in listaArticulos)
+                else if (!ArticuloCompleto(articuloModificado) && articuloModificado.Imagenes != null)
                 {
-                    if (item.Id == id)
+                    foreach (var item in listaArticulos)
                     {
-                        foreach (var imagenes in articuloModificado.Imagenes)
+                        if (item.Id == id)
                         {
-                            listaImagen.Add(imagenes);
+                            foreach (var imagenes in articuloModificado.Imagenes)
+                            {
+                                listaImagen.Add(new Imagen { ImagenUrl = imagenes.ImagenUrl });
+                            }
+                            imagenManager.agregarImagenes(id, listaImagen);
                         }
-                        imagenManager.agregarImagenes(id, listaImagen);
                     }
+                    return Request.CreateResponse(HttpStatusCode.OK, "Imágenes agregadas correctamente.");
                 }
-            }
-            else if (ArticuloCompleto(articuloModificado) && articuloModificado.Imagenes.Count == 0)
-            {
-                Articulo articulo = new Articulo
+                else if (ArticuloCompleto(articuloModificado) && articuloModificado.Imagenes == null)
                 {
-                    Nombre = articuloModificado.Nombre,
-                    Descripcion = articuloModificado.Descripcion,
-                    Codigo = articuloModificado.Codigo,
-                    Precio = articuloModificado.Precio,
-                    Categoria = { Id = articuloModificado.IdCategoria },
-                    Marca = { Id = articuloModificado.IdMarca },
-                    Id = id
-                };
-                articuloManager.modificarArticulo(articulo);
+                    if (!MarcaExiste(articuloModificado.IdMarca))
+                        return Request.CreateResponse(HttpStatusCode.BadRequest, "La marca no existe.");
+                    if (!CategoriaExiste(articuloModificado.IdCategoria))
+                        return Request.CreateResponse(HttpStatusCode.BadRequest, "La categoría no existe.");
+                    if (!PrecioValido(articuloModificado.Precio))
+                        return Request.CreateResponse(HttpStatusCode.BadRequest, "El precio es un campo obligatorio y debe ser mayor a cero.");
+
+                    var articulo = ConstruirArticuloDesdeDto(articuloModificado, id);
+
+                    articuloManager.modificarArticulo(articulo);
+                    return Request.CreateResponse(HttpStatusCode.OK, "Artículo modificado correctamente.");
+                }
+                return Request.CreateResponse(HttpStatusCode.BadRequest, "Datos incompletos o no válidos.");
             }
+            catch (Exception)
+            {
+                return Request.CreateResponse(HttpStatusCode.InternalServerError, "Ocurrió un error inesperado.");
+            }
+            
         }
 
         // DELETE: api/Producto/5
@@ -175,7 +196,40 @@ namespace API_WEB.Controllers
 
         private bool ArticuloCompleto(ArticuloDto articulo)
         {
-            return true;
+            return !string.IsNullOrWhiteSpace(articulo.Codigo) &&
+            !string.IsNullOrWhiteSpace(articulo.Nombre) &&
+            !string.IsNullOrWhiteSpace(articulo.Descripcion) &&
+            articulo.IdMarca > 0 &&
+            articulo.IdCategoria > 0;
+        }
+        private Articulo ConstruirArticuloDesdeDto(ArticuloDto dto, int id)
+        {
+            return new Articulo
+            {
+                Nombre = dto.Nombre,
+                Descripcion = dto.Descripcion,
+                Codigo = dto.Codigo,
+                Precio = dto.Precio,
+                Categoria = { Id = dto.IdCategoria },
+                Marca = { Id = dto.IdMarca },
+                Id = id
+            };
+        }
+        private bool MarcaExiste(int id)
+        {
+            return new MarcaManager().listar().Any(x => x.Id == id);
+        }
+        private bool ProductoExiste(int id)
+        {
+            return new ArticuloManager().listarArticulos().Any(x => x.Id == id);
+        }
+        private bool CategoriaExiste(int id)
+        {
+            return new CategoriaManager().listar().Any(x => x.Id == id);
+        }
+        private bool PrecioValido(decimal precio)
+        {
+            return precio > 0;
         }
     }
 }
