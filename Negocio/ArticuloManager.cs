@@ -169,5 +169,120 @@ namespace Negocio
                 conexion.cerrarConexion();
             }
         }
+
+        public void eliminarArticulo(int id)
+        {
+            AccesoADatos conexion = new AccesoADatos();
+
+            try
+            {
+                string query = "Delete from Imagenes where IdArticulo = @IdArticulo";
+                conexion.setearConsulta(query);
+                conexion.limpiarParametros();
+                conexion.agregarParametros("@IdArticulo", id);
+                conexion.ejecutarNonQuery();
+
+                query = "Delete from Articulos where Id = @Id";
+                conexion.setearConsulta(query);
+                conexion.limpiarParametros();
+                conexion.agregarParametros("@Id", id);
+                conexion.ejecutarNonQuery();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                conexion.cerrarConexion();
+            }
+        }
+
+        public Articulo obtenerArticulo(int id) 
+        {
+            AccesoADatos conexion = new AccesoADatos();
+
+            Articulo articulo = new Articulo();
+            articulo = null;
+
+            CategoriaManager categoriaManager = new CategoriaManager();
+            MarcaManager marcaManager = new MarcaManager();
+
+            listaCategorias = categoriaManager.listar();
+            listaMarcas = marcaManager.listar();
+
+            try
+            {
+                string query = "Select Id, Codigo, Nombre, Descripcion, IdMarca, IdCategoria, Precio from Articulos where Id = @Id";
+                conexion.setearConsulta(query);
+                conexion.agregarParametros("@Id", id);
+                conexion.ejecutarQuery();
+
+                if (conexion.Lector.Read())
+                {
+                    Articulo aux = new Articulo();
+
+                    aux.Id = (int)conexion.Lector["Id"];
+                    aux.Codigo = leerDatosDeLaBD(conexion.Lector, "Codigo", "Código erroneo");
+                    aux.Nombre = leerDatosDeLaBD(conexion.Lector, "Nombre", "Nombre erroneo");
+                    aux.Descripcion = leerDatosDeLaBD(conexion.Lector, "Descripcion", "Descripción erronea");
+
+                    int idCategoria = (int)conexion.Lector["IdCategoria"];
+                    aux.Categoria.Id = idCategoria;
+                    bool encontroCategoria = false;
+
+                    foreach (Categoria cat in listaCategorias)
+                    {
+                        if (cat.Id == idCategoria)
+                        {
+                            aux.Categoria.Descripcion = cat.Descripcion;
+                            encontroCategoria = true;
+                            break;
+                        }
+                    }
+
+                    if (!encontroCategoria)
+                        aux.Categoria.Descripcion = "Error al cargar la categoría.";
+
+
+                    int idMarca = (int)conexion.Lector["IdMarca"];
+                    aux.Marca.Id = idMarca;
+                    bool encontroMarca = false;
+
+                    foreach (Marca m in listaMarcas)
+                    {
+                        if (m.Id == idMarca)
+                        {
+                            aux.Marca.Descripcion = m.Descripcion;
+                            encontroMarca = true;
+                            break;
+                        }
+                    }
+
+                    if (!encontroMarca)
+                        aux.Marca.Descripcion = "Error al cargar la Marca.";
+
+                    try
+                    {
+                        aux.Precio = Decimal.Parse(conexion.Lector["Precio"].ToString());
+                    }
+                    catch (Exception)
+                    {
+                        aux.Precio = 0;
+                    }
+                    articulo = aux;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                conexion.cerrarConexion();
+            }
+
+            return articulo;
+        }
     }
 }

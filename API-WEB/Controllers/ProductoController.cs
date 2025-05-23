@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
+using System.Web.UI.WebControls.WebParts;
 using API_WEB.Models;
 using Dominio;
 using Negocio;
@@ -43,9 +44,31 @@ namespace API_WEB.Controllers
         }
 
         // GET: api/Producto/5
-        public string Get(int id)
+        public HttpResponseMessage Get(int id)
         {
-            return "value";
+            ArticuloManager articuloManager = new ArticuloManager();
+            ImagenManager imagenManager = new ImagenManager();
+
+            var articulo = articuloManager.obtenerArticulo(id);
+            var listaImagenes = imagenManager.listarImagenes();
+
+            if (articulo == null)
+                return Request.CreateResponse(HttpStatusCode.NotFound, "El articulo no existe.");
+
+            foreach (var img in listaImagenes)
+            {
+                if (id == img.IdArticulo)
+                {
+                    articulo.Imagenes.Add(new Imagen
+                    {
+                        Id = img.Id,
+                        IdArticulo = img.IdArticulo,
+                        ImagenUrl = img.ImagenUrl
+                    });
+                }
+            }
+
+            return Request.CreateResponse(HttpStatusCode.OK, articulo);
         }
 
         // POST: api/Producto
@@ -136,8 +159,18 @@ namespace API_WEB.Controllers
         }
 
         // DELETE: api/Producto/5
-        public void Delete(int id)
+        public HttpResponseMessage Delete(int id)
         {
+            ArticuloManager articuloManager = new ArticuloManager();
+
+            var articulo = articuloManager.obtenerArticulo(id);
+
+            if (articulo == null)
+                return Request.CreateResponse(HttpStatusCode.NotFound, "El articulo no existe.");
+
+            articuloManager.eliminarArticulo(id);
+
+            return Request.CreateResponse(HttpStatusCode.OK, "Eliminacion Exitosa.");
         }
 
         private bool ArticuloCompleto(ArticuloDto articulo)
