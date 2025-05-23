@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Web;
 using System.Web.Http;
 using System.Web.UI.WebControls.WebParts;
 using System.Xml.Linq;
@@ -41,14 +42,13 @@ namespace API_WEB.Controllers
                         }
                     }
                 }
-
                 return Request.CreateResponse(HttpStatusCode.OK, listaArticulos);
             }
             catch (Exception)
             {
                 return Request.CreateResponse(HttpStatusCode.InternalServerError, "Ocurrió un error inesperado.");
             }
-            
+
         }
 
         // GET: api/Producto/5
@@ -80,7 +80,7 @@ namespace API_WEB.Controllers
         }
 
         // POST: api/Producto
-        public void Post([FromBody] ArticuloDto articuloNuevo)
+        public HttpResponseMessage Post([FromBody] ArticuloDto articuloNuevo)
         {
             if (ArticuloCompleto(articuloNuevo))
             {
@@ -93,14 +93,41 @@ namespace API_WEB.Controllers
                     Precio = articuloNuevo.Precio,
                     Categoria = { Id = articuloNuevo.IdCategoria },
                     Marca = { Id = articuloNuevo.IdMarca },
-                };                
-                articuloManager.insertarArticulo(articulo);
+                };
+                /*
+                if (!MarcaExiste(articuloNuevo.IdMarca))
+                    return Request.CreateResponse(HttpStatusCode.BadRequest, "La marca no existe.");
+
+                if (!CategoriaExiste(articuloNuevo.IdCategoria))
+                    return Request.CreateResponse(HttpStatusCode.BadRequest, "La categoría no existe.");
+
+                if (!PrecioValido(articuloNuevo.Precio))
+                    return Request.CreateResponse(HttpStatusCode.BadRequest, "El precio es un campo obligatorio y debe ser mayor a cero.");
+                */
+                var request = ValidarArticulo(articuloNuevo);
+                if ((int)request.StatusCode == 200)
+                {
+                    try
+                    {
+                        articuloManager.insertarArticulo(articulo);
+                        return request;
+                    }
+                    catch (Exception)
+                    {
+                        return Request.CreateResponse(HttpStatusCode.InternalServerError, "Ocurrió un error inesperado.");
+                    }
+                }
+                else
+                {
+                    return request;
+                }
             }
             else
             {
-                return;
+                return Request.CreateResponse(HttpStatusCode.BadRequest, "Datos incompletos o no válidos.");
             }
         }
+
 
         // PUT: api/Producto/5
         public HttpResponseMessage Put(int id, [FromBody] ArticuloDto articuloModificado)
@@ -112,21 +139,30 @@ namespace API_WEB.Controllers
                 List<Imagen> listaImagen = new List<Imagen>();
                 ImagenManager imagenManager = new ImagenManager();
 
-                if(!ProductoExiste(id))
+                if (!ProductoExiste(id))
                     return Request.CreateResponse(HttpStatusCode.NotFound, "El articulo no existe.");
 
                 if (ArticuloCompleto(articuloModificado) && articuloModificado.Imagenes != null)
-                { 
+                {
+                    /*
                     if (!MarcaExiste(articuloModificado.IdMarca))
                         return Request.CreateResponse(HttpStatusCode.BadRequest, "La marca no existe.");
                     if (!CategoriaExiste(articuloModificado.IdCategoria))
                         return Request.CreateResponse(HttpStatusCode.BadRequest, "La categoría no existe.");
                     if (!PrecioValido(articuloModificado.Precio))
                         return Request.CreateResponse(HttpStatusCode.BadRequest, "El precio es un campo obligatorio y debe ser mayor a cero.");
+                    */
 
-                    var articulo = ConstruirArticuloDesdeDto(articuloModificado, id);
-
-                    articuloManager.modificarArticulo(articulo);
+                    var request = ValidarArticulo(articuloModificado);
+                    if ((int)request.StatusCode == 200)
+                    {
+                        var articulo = ConstruirArticuloDesdeDto(articuloModificado, id);
+                        articuloManager.modificarArticulo(articulo);
+                    }
+                    else
+                    {
+                        return request;
+                    }
 
                     foreach (var item in listaArticulos)
                     {
@@ -158,6 +194,7 @@ namespace API_WEB.Controllers
                 }
                 else if (ArticuloCompleto(articuloModificado) && articuloModificado.Imagenes == null)
                 {
+                    /*
                     if (!MarcaExiste(articuloModificado.IdMarca))
                         return Request.CreateResponse(HttpStatusCode.BadRequest, "La marca no existe.");
                     if (!CategoriaExiste(articuloModificado.IdCategoria))
@@ -166,9 +203,20 @@ namespace API_WEB.Controllers
                         return Request.CreateResponse(HttpStatusCode.BadRequest, "El precio es un campo obligatorio y debe ser mayor a cero.");
 
                     var articulo = ConstruirArticuloDesdeDto(articuloModificado, id);
-
                     articuloManager.modificarArticulo(articulo);
                     return Request.CreateResponse(HttpStatusCode.OK, "Artículo modificado correctamente.");
+                    */
+                    var request = ValidarArticulo(articuloModificado);
+                    if ((int)request.StatusCode == 200)
+                    {
+                        var articulo = ConstruirArticuloDesdeDto(articuloModificado, id);
+                        articuloManager.modificarArticulo(articulo);
+                        return Request.CreateResponse(HttpStatusCode.OK, "Artículo modificado correctamente.");
+                    }
+                    else
+                    {
+                        return request;
+                    }
                 }
                 return Request.CreateResponse(HttpStatusCode.BadRequest, "Datos incompletos o no válidos.");
             }
@@ -176,7 +224,7 @@ namespace API_WEB.Controllers
             {
                 return Request.CreateResponse(HttpStatusCode.InternalServerError, "Ocurrió un error inesperado.");
             }
-            
+
         }
 
         // DELETE: api/Producto/5
@@ -230,6 +278,17 @@ namespace API_WEB.Controllers
         private bool PrecioValido(decimal precio)
         {
             return precio > 0;
+        }
+
+        private HttpResponseMessage ValidarArticulo(ArticuloDto articulo)
+        {
+            if (!MarcaExiste(articulo.IdMarca))
+                return Request.CreateResponse(HttpStatusCode.BadRequest, "La marca no existe.");
+            if (!CategoriaExiste(articulo.IdCategoria))
+                return Request.CreateResponse(HttpStatusCode.BadRequest, "La categoría no existe.");
+            if (!PrecioValido(articulo.Precio))
+                return Request.CreateResponse(HttpStatusCode.BadRequest, "El precio es un campo obligatorio y debe ser mayor a cero.");
+            return Request.CreateResponse(HttpStatusCode.OK, "Artículo agregado correctamente.");
         }
     }
 }
