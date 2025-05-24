@@ -1,15 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Web;
 using System.Web.Http;
-using System.Web.UI.WebControls.WebParts;
-using System.Xml.Linq;
 using API_WEB.Models;
 using Dominio;
+using Microsoft.Ajax.Utilities;
 using Negocio;
 
 namespace API_WEB.Controllers
@@ -128,6 +125,46 @@ namespace API_WEB.Controllers
             }
         }
 
+        public HttpResponseMessage Post(int Id, [FromBody] List<ImagenDto> listaImagenes)
+        {
+            ArticuloManager articuloManager = new ArticuloManager();
+            List<Articulo> listaArticulos = articuloManager.listarArticulos();
+
+            if(listaImagenes == null)
+            {
+                return Request.CreateResponse(HttpStatusCode.BadRequest, "No se ha ingresado ninguna imagen.");
+            }
+            else if (listaImagenes.Count == 0)
+            {
+                return Request.CreateResponse(HttpStatusCode.BadRequest, "No se ha ingresado ninguna imagen.");
+            }
+            else if (listaArticulos.Exists(X => X.Id == Id))
+            {
+                try
+                {
+                    List<Imagen> listaImagenesAagregar = new List<Imagen>();
+                    ImagenManager imagenManager = new ImagenManager();
+
+                    foreach (var item in listaImagenes)
+                    {
+                        if (item.ImagenUrl.ToString().IsNullOrWhiteSpace())
+                            return Request.CreateResponse(HttpStatusCode.BadRequest, "Hay valores no validos en la solicitud.");
+                        listaImagenesAagregar.Add(new Imagen { ImagenUrl = item.ImagenUrl });
+                    }
+
+                    imagenManager.agregarImagenes(Id, listaImagenesAagregar);
+                    return Request.CreateResponse(HttpStatusCode.OK, "Artículo agregado correctamente.");
+                }
+                catch (Exception)
+                {
+                    return Request.CreateResponse(HttpStatusCode.InternalServerError, "Ocurrió un error inesperado.");
+                }
+            }
+            else
+            {
+                return Request.CreateResponse(HttpStatusCode.BadRequest, "El ID ingresado no corresponde con ningún artículo.");
+            }
+        }
 
         // PUT: api/Producto/5
         public HttpResponseMessage Put(int id, [FromBody] ArticuloDto articuloModificado)
@@ -163,7 +200,8 @@ namespace API_WEB.Controllers
                     {
                         return request;
                     }
-
+                    //-------Codigo deprecado ----------------------//
+                    /*
                     foreach (var item in listaArticulos)
                     {
                         if (item.Id == id)
@@ -174,9 +212,11 @@ namespace API_WEB.Controllers
                             }
                             imagenManager.agregarImagenes(id, listaImagen);
                         }
-                    }
+                    }*/
                     return Request.CreateResponse(HttpStatusCode.OK, "Artículo modificado e Imágenes agregadas correctamente.");
                 }
+                //-------Codigo deprecado ----------------------//
+                /*
                 else if (!ArticuloCompleto(articuloModificado) && articuloModificado.Imagenes != null)
                 {
                     foreach (var item in listaArticulos)
@@ -192,6 +232,8 @@ namespace API_WEB.Controllers
                     }
                     return Request.CreateResponse(HttpStatusCode.OK, "Imágenes agregadas correctamente.");
                 }
+
+                */
                 else if (ArticuloCompleto(articuloModificado) && articuloModificado.Imagenes == null)
                 {
                     /*
