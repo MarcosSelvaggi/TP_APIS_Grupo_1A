@@ -125,13 +125,13 @@ namespace API_WEB.Controllers
 
                     foreach (var item in listaImagenes)
                     {
-                        if (item.ImagenUrl.ToString().IsNullOrWhiteSpace())
+                        if (string.IsNullOrWhiteSpace(item.ImagenUrl))
                             return Request.CreateResponse(HttpStatusCode.BadRequest, "Hay valores no validos en la solicitud.");
                         listaImagenesAagregar.Add(new Imagen { ImagenUrl = item.ImagenUrl });
                     }
 
                     imagenManager.agregarImagenes(Id, listaImagenesAagregar);
-                    return Request.CreateResponse(HttpStatusCode.OK, "Artículo agregado correctamente.");
+                    return Request.CreateResponse(HttpStatusCode.OK, "Imagen(es) agregada(s) correctamente.");
                 }
                 catch (Exception)
                 {
@@ -142,7 +142,7 @@ namespace API_WEB.Controllers
             {
                 return Request.CreateResponse(HttpStatusCode.BadRequest, "El ID ingresado no corresponde con ningún artículo.");
             }
-        }
+        <}
 
         // PUT: api/Producto/5
         public HttpResponseMessage Put(int id, [FromBody] ArticuloDto articuloModificado)
