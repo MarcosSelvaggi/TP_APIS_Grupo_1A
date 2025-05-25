@@ -26,18 +26,7 @@ namespace API_WEB.Controllers
 
                 foreach (var art in listaArticulos)
                 {
-                    foreach (var img in listaImagenes)
-                    {
-                        if (art.Id == img.IdArticulo)
-                        {
-                            art.Imagenes.Add(new Imagen
-                            {
-                                Id = img.Id,
-                                IdArticulo = img.IdArticulo,
-                                ImagenUrl = img.ImagenUrl
-                            });
-                        }
-                    }
+                    AsignarImagenes(art, listaImagenes);
                 }
                 return Request.CreateResponse(HttpStatusCode.OK, listaArticulos);
             }
@@ -60,18 +49,7 @@ namespace API_WEB.Controllers
             if (articulo == null)
                 return Request.CreateResponse(HttpStatusCode.NotFound, "El articulo no existe.");
 
-            foreach (var img in listaImagenes)
-            {
-                if (id == img.IdArticulo)
-                {
-                    articulo.Imagenes.Add(new Imagen
-                    {
-                        Id = img.Id,
-                        IdArticulo = img.IdArticulo,
-                        ImagenUrl = img.ImagenUrl
-                    });
-                }
-            }
+            AsignarImagenes(articulo, listaImagenes);
 
             return Request.CreateResponse(HttpStatusCode.OK, articulo);
         }
@@ -130,7 +108,7 @@ namespace API_WEB.Controllers
             ArticuloManager articuloManager = new ArticuloManager();
             List<Articulo> listaArticulos = articuloManager.listarArticulos();
 
-            if(listaImagenes == null)
+            if (listaImagenes == null)
             {
                 return Request.CreateResponse(HttpStatusCode.BadRequest, "No se ha ingresado ninguna imagen.");
             }
@@ -172,14 +150,15 @@ namespace API_WEB.Controllers
             try
             {
                 ArticuloManager articuloManager = new ArticuloManager();
-                List<Articulo> listaArticulos = articuloManager.listarArticulos();
-                List<Imagen> listaImagen = new List<Imagen>();
                 ImagenManager imagenManager = new ImagenManager();
 
                 if (!ProductoExiste(id))
                     return Request.CreateResponse(HttpStatusCode.NotFound, "El articulo no existe.");
 
-                if (ArticuloCompleto(articuloModificado) && articuloModificado.Imagenes != null)
+                if (articuloModificado == null)
+                    return Request.CreateResponse(HttpStatusCode.BadRequest, "No se recibió ningún artículo.");
+
+                if (ArticuloCompleto(articuloModificado))
                 {
                     /*
                     if (!MarcaExiste(articuloModificado.IdMarca))
@@ -195,48 +174,21 @@ namespace API_WEB.Controllers
                     {
                         var articulo = ConstruirArticuloDesdeDto(articuloModificado, id);
                         articuloManager.modificarArticulo(articulo);
+                        return Request.CreateResponse(HttpStatusCode.OK, "Artículo modificado e Imágenes agregadas correctamente.");
                     }
                     else
                     {
                         return request;
                     }
-                    //-------Codigo deprecado ----------------------//
-                    /*
-                    foreach (var item in listaArticulos)
-                    {
-                        if (item.Id == id)
-                        {
-                            foreach (var imagenes in articuloModificado.Imagenes)
-                            {
-                                listaImagen.Add(new Imagen { ImagenUrl = imagenes.ImagenUrl });
-                            }
-                            imagenManager.agregarImagenes(id, listaImagen);
-                        }
-                    }*/
-                    return Request.CreateResponse(HttpStatusCode.OK, "Artículo modificado e Imágenes agregadas correctamente.");
                 }
-                //-------Codigo deprecado ----------------------//
-                /*
-                else if (!ArticuloCompleto(articuloModificado) && articuloModificado.Imagenes != null)
+                else
                 {
-                    foreach (var item in listaArticulos)
-                    {
-                        if (item.Id == id)
-                        {
-                            foreach (var imagenes in articuloModificado.Imagenes)
-                            {
-                                listaImagen.Add(new Imagen { ImagenUrl = imagenes.ImagenUrl });
-                            }
-                            imagenManager.agregarImagenes(id, listaImagen);
-                        }
-                    }
-                    return Request.CreateResponse(HttpStatusCode.OK, "Imágenes agregadas correctamente.");
+                    return Request.CreateResponse(HttpStatusCode.BadRequest, "Datos incompletos o no válidos.");
                 }
-
-                */
+                /*
                 else if (ArticuloCompleto(articuloModificado) && articuloModificado.Imagenes == null)
                 {
-                    /*
+
                     if (!MarcaExiste(articuloModificado.IdMarca))
                         return Request.CreateResponse(HttpStatusCode.BadRequest, "La marca no existe.");
                     if (!CategoriaExiste(articuloModificado.IdCategoria))
@@ -247,8 +199,8 @@ namespace API_WEB.Controllers
                     var articulo = ConstruirArticuloDesdeDto(articuloModificado, id);
                     articuloManager.modificarArticulo(articulo);
                     return Request.CreateResponse(HttpStatusCode.OK, "Artículo modificado correctamente.");
-                    */
-                    var request = ValidarArticulo(articuloModificado);
+
+                var request = ValidarArticulo(articuloModificado);
                     if ((int)request.StatusCode == 200)
                     {
                         var articulo = ConstruirArticuloDesdeDto(articuloModificado, id);
@@ -259,14 +211,12 @@ namespace API_WEB.Controllers
                     {
                         return request;
                     }
-                }
-                return Request.CreateResponse(HttpStatusCode.BadRequest, "Datos incompletos o no válidos.");
+                }*/
             }
             catch (Exception)
             {
                 return Request.CreateResponse(HttpStatusCode.InternalServerError, "Ocurrió un error inesperado.");
             }
-
         }
 
         // DELETE: api/Producto/5
@@ -332,5 +282,22 @@ namespace API_WEB.Controllers
                 return Request.CreateResponse(HttpStatusCode.BadRequest, "El precio es un campo obligatorio y debe ser mayor a cero.");
             return Request.CreateResponse(HttpStatusCode.OK, "Artículo agregado correctamente.");
         }
+
+        private void AsignarImagenes(Articulo articulo, List<Imagen> listaImagenes)
+        {
+            foreach (var img in listaImagenes)
+            {
+                if (articulo.Id == img.IdArticulo)
+                {
+                    articulo.Imagenes.Add(new Imagen
+                    {
+                        Id = img.Id,
+                        IdArticulo = img.IdArticulo,
+                        ImagenUrl = img.ImagenUrl
+                    });
+                }
+            }
+        }
+
     }
 }
