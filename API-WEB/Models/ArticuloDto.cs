@@ -14,7 +14,7 @@ namespace API_WEB.Models
         public decimal Precio { get; set; }
         public int IdMarca { get; set; }
         public int IdCategoria { get; set; }
-        public List<ImagenDto> Imagenes { get; set; }
+        //public List<ImagenDto> Imagenes { get; set; }
 
     }
 }

@@ -6,7 +6,6 @@ using System.Net.Http;
 using System.Web.Http;
 using API_WEB.Models;
 using Dominio;
-using Microsoft.Ajax.Utilities;
 using Negocio;
 
 namespace API_WEB.Controllers
@@ -47,7 +46,7 @@ namespace API_WEB.Controllers
             var listaImagenes = imagenManager.listarImagenes();
 
             if (articulo == null)
-                return Request.CreateResponse(HttpStatusCode.NotFound, "El articulo no existe.");
+                return Request.CreateResponse(HttpStatusCode.NotFound, "El artículo no existe.");
 
             AsignarImagenes(articulo, listaImagenes);
 
@@ -57,6 +56,9 @@ namespace API_WEB.Controllers
         // POST: api/Producto
         public HttpResponseMessage Post([FromBody] ArticuloDto articuloNuevo)
         {
+            if (articuloNuevo == null)
+                return Request.CreateResponse(HttpStatusCode.BadRequest, "Datos incompletos o no válidos.");
+
             if (ArticuloCompleto(articuloNuevo))
             {
                 ArticuloManager articuloManager = new ArticuloManager();
@@ -108,6 +110,9 @@ namespace API_WEB.Controllers
             ArticuloManager articuloManager = new ArticuloManager();
             List<Articulo> listaArticulos = articuloManager.listarArticulos();
 
+            if (!ProductoExiste(Id))
+                return Request.CreateResponse(HttpStatusCode.NotFound, "El artículo no existe.");
+
             if (listaImagenes == null)
             {
                 return Request.CreateResponse(HttpStatusCode.BadRequest, "No se ha ingresado ninguna imagen.");
@@ -126,7 +131,7 @@ namespace API_WEB.Controllers
                     foreach (var item in listaImagenes)
                     {
                         if (string.IsNullOrWhiteSpace(item.ImagenUrl))
-                            return Request.CreateResponse(HttpStatusCode.BadRequest, "Hay valores no validos en la solicitud.");
+                            return Request.CreateResponse(HttpStatusCode.BadRequest, "Hay valores no válidos en la solicitud.");
                         listaImagenesAagregar.Add(new Imagen { ImagenUrl = item.ImagenUrl });
                     }
 
@@ -142,7 +147,7 @@ namespace API_WEB.Controllers
             {
                 return Request.CreateResponse(HttpStatusCode.BadRequest, "El ID ingresado no corresponde con ningún artículo.");
             }
-        <}
+        }
 
         // PUT: api/Producto/5
         public HttpResponseMessage Put(int id, [FromBody] ArticuloDto articuloModificado)
@@ -153,11 +158,11 @@ namespace API_WEB.Controllers
                 ImagenManager imagenManager = new ImagenManager();
 
                 if (!ProductoExiste(id))
-                    return Request.CreateResponse(HttpStatusCode.NotFound, "El articulo no existe.");
+                    return Request.CreateResponse(HttpStatusCode.NotFound, "El artículo no existe.");
 
                 if (articuloModificado == null)
                     return Request.CreateResponse(HttpStatusCode.BadRequest, "No se recibió ningún artículo.");
-
+                
                 if (ArticuloCompleto(articuloModificado))
                 {
                     /*
@@ -174,7 +179,7 @@ namespace API_WEB.Controllers
                     {
                         var articulo = ConstruirArticuloDesdeDto(articuloModificado, id);
                         articuloManager.modificarArticulo(articulo);
-                        return Request.CreateResponse(HttpStatusCode.OK, "Artículo modificado e Imágenes agregadas correctamente.");
+                        return Request.CreateResponse(HttpStatusCode.OK, "Artículo modificado correctamente.");
                     }
                     else
                     {
@@ -227,11 +232,11 @@ namespace API_WEB.Controllers
             var articulo = articuloManager.obtenerArticulo(id);
 
             if (articulo == null)
-                return Request.CreateResponse(HttpStatusCode.NotFound, "El articulo no existe.");
+                return Request.CreateResponse(HttpStatusCode.NotFound, "El artículo no existe.");
 
             articuloManager.eliminarArticulo(id);
 
-            return Request.CreateResponse(HttpStatusCode.OK, "Eliminacion Exitosa.");
+            return Request.CreateResponse(HttpStatusCode.OK, "Eliminación Exitosa.");
         }
 
         private bool ArticuloCompleto(ArticuloDto articulo)
